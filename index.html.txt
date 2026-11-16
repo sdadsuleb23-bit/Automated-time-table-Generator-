@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Automated School Time Table Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+  <!-- Header -->
+  <header class="bg-indigo-700 text-white p-4 shadow-md no-print">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Automated School Time Table Generator</h1>
+        <p class="text-indigo-200 text-sm">Clash-Free Constraint Solver • Multi-View • Excel & PDF Export</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="loadSampleData()" class="bg-indigo-500 hover:bg-indigo-600 px-3 py-2 rounded text-sm font-medium">Reset Sample Data</button>
+        <button onclick="generateTimetable()" class="bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded font-bold shadow">⚡ Generate Timetable</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 space-y-6">
+
+    <!-- Step 1: Configuration & Inputs -->
+    <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 no-print">
+      <h2 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">1. School Configuration & Inputs</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500">Classes / Sections (Comma separated)</label>
+          <input id="classesInput" type="text" class="mt-1 w-full border rounded p-2 text-sm" value="Class 8-A, Class 8-B, Class 9-A, Class 9-B, Class 10-A, Class 10-B">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500">Working Days (Comma separated)</label>
+          <input id="daysInput" type="text" class="mt-1 w-full border rounded p-2 text-sm" value="Mon, Tue, Wed, Thu, Fri, Sat">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500">Periods Per Day</label>
+          <input id="periodsInput" type="number" min="4" max="12" class="mt-1 w-full border rounded p-2 text-sm" value="8">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500">Max Periods / Teacher / Day</label>
+          <input id="maxTeacherPeriods" type="number" min="1" max="10" class="mt-1 w-full border rounded p-2 text-sm" value="5">
+        </div>
+      </div>
+
+      <!-- Subject & Teacher Mapping -->
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-sm font-bold text-slate-700">Subjects, Weekly Periods & Assigned Teachers (Applied per Section)</h3>
+        <button onclick="addSubjectRow()" class="text-xs bg-slate-800 text-white px-3 py-1 rounded hover:bg-slate-700">+ Add Subject</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse border border-slate-200">
+          <thead class="bg-slate-100 text-left">
+            <tr>
+              <th class="p-2 border">Subject Name</th>
+              <th class="p-2 border w-32">Periods / Week</th>
+              <th class="p-2 border">Assigned Teacher(s) (Comma separated)</th>
+              <th class="p-2 border w-36">Lab (Double Period)</th>
+              <th class="p-2 border w-20 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="subjectTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Status Alert -->
+    <div id="statusBox" class="hidden p-4 rounded-lg font-medium text-sm"></div>
+
+    <!-- Step 2: Timetable Viewer & Exports -->
+    <section id="outputSection" class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 hidden">
+      <div class="flex flex-wrap justify-between items-center gap-4 mb-4 border-b pb-3 no-print">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2 class="text-lg font-bold text-slate-700">2. Generated Schedule</h2>
+          
+          <select id="viewMode" onchange="updateFilterDropdown()" class="border rounded p-2 text-sm font-semibold bg-indigo-50 text-indigo-900">
+            <option value="class">View by Class / Section</option>
+            <option value="teacher">View by Teacher</option>
+          </select>
+
+          <select id="entitySelect" onchange="renderTimetable()" class="border rounded p-2 text-sm font-semibold"></select>
+        </div>
+
+        <!-- Export Buttons -->
+        <div class
